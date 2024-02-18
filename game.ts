@@ -3,6 +3,9 @@ import { Water } from './objects/water'
 import { Sky } from 'three/examples/jsm/objects/Sky'
 import { rocketModel, mothershipModel, addBackgroundBit, addChallengeRow, challengeRows, environmentBits, starterBay } from "./game/objects";
 import { crystalUiElement, shieldUiElement } from "./game/ui";
+import { isTouchDevice } from "./isTouchDevice";
+import {JoystickManager} from 'nipplejs';
+import * as joystick from 'nipplejs';
 
 export const scene = new Scene()
 export const camera = new PerspectiveCamera(
@@ -15,6 +18,11 @@ const sun = new Vector3();
 
 let leftPressed = false;
 let rightPressed = false;
+
+let joystickManager: JoystickManager | null;
+
+// The X Offset (left-to-right) of the rocket, as it moves within the scene
+let positionOffset = 0.0;
 
 // Configure water settings
 const waterGeometry = new PlaneGeometry(10000, 10000);
@@ -70,9 +78,25 @@ export const sceneConfiguration = {
     speed: 0.0
 }
 
+const clamp = (num: number, min: number, max: number) => Math.min(Math.max(num, min), max);
+
 // If the user changes tabs, we don't want to waste resources rendering
 const animate = () => {
     requestAnimationFrame(animate);
+    // If the left arrow is pressed, move the rocket to the left
+    if (leftPressed) {
+        rocketModel.position.x -= 0.5;
+    }
+    // If the right arrow is pressed, move the rocket to the right
+    if (rightPressed) {
+        rocketModel.position.x += 0.5;
+    }
+    // If the joystick is in use, update the current location of the rocket accordingly
+    rocketModel.position.x += positionOffset;
+    // Clamp the final position of the rocket to an allowable region
+    rocketModel.position.x = clamp(rocketModel.position.x, -20, 25);
+
+
     renderer.render(scene, camera);
 }
 
@@ -85,6 +109,24 @@ async function init() {
     renderer = new WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+
+    if (isTouchDevice()) {
+    // Get the area within the UI to use as our joystick
+    let touchZone = document.getElementById('joystick-zone');
+
+    if (touchZone != null) {
+        // Create a Joystick Manager
+        joystickManager = joystick.create({zone: document.getElementById('joystick-zone')!,})
+        // Register what to do when the joystick moves
+        joystickManager.on("move", (event, data) => {
+            positionOffset = data.vector.x;
+        })
+        // When the joystick isn't being interacted with anymore, stop moving the rocket
+        joystickManager.on('end', (event, data) => {
+            positionOffset = 0.0;
+        })
+    }
+}
 
     // Configure the rotation and position of our water plane
     water.rotation.x = -Math.PI / 2;
