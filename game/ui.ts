@@ -81,3 +81,5 @@ export const setProgress = (progress: string) => {
         progressElement.innerText = progress;
     }
 }
+
+
