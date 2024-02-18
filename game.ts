@@ -13,6 +13,9 @@ export const camera = new PerspectiveCamera(
 )
 const sun = new Vector3();
 
+let leftPressed = false;
+let rightPressed = false;
+
 // Configure water settings
 const waterGeometry = new PlaneGeometry(10000, 10000);
 const water = new Water(
@@ -128,6 +131,9 @@ async function init() {
     mothershipModel.position.z = 100;
     mothershipModel.scale.set(15,15,15);
     sceneConfiguration.ready = true;
+
+    document.addEventListener('keydown', onKeyDown, false);
+    document.addEventListener('keyup', onKeyUp, false);
 }
 
 // This scene setup function will be called every time the player starts a new level
@@ -203,4 +209,23 @@ export const sceneSetup = (level: number) => {
     document.getElementById('levelIndicator')!.innerText = `LEVEL ${sceneConfiguration.level}`;
     // Indicates that the scene setup has completed, and the scene is now ready
     sceneConfiguration.ready = true;
+}
+
+function onKeyDown(event: KeyboardEvent) {
+    console.log('keypress');
+    let keyCode = event.which;
+    if (keyCode == 37) {
+        leftPressed = true;
+    } else if (keyCode == 39) {
+        rightPressed = true;
+    }
+}
+
+function onKeyUp(event: KeyboardEvent) {
+    let keyCode = event.which;
+    if (keyCode == 37) {
+        leftPressed = false;
+    } else if (keyCode == 39) {
+        rightPressed = false;
+    }
 }
